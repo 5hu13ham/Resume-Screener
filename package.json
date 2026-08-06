@@ -9,26 +9,35 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fixtures:resumes": "node scripts/create-sample-resumes.mjs",
+    "verify:workflow": "node scripts/verify-workflow.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "clsx": "^2.1.1",
+    "mammoth": "^1.12.0",
     "next": "^15.3.3",
+    "openai": "^6.49.0",
+    "pdfkit": "^0.19.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "unpdf": "^1.7.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22.15.29",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "eslint": "^9.28.0",
     "eslint-config-next": "^15.3.3",
     "eslint-config-prettier": "^10.1.5",
+    "pdf-lib": "^1.17.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.12",
     "tailwindcss": "^4.1.8",

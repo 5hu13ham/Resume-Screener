@@ -7,7 +7,7 @@ import { cn } from "@/src/presentation/lib/cn";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/upload", label: "Upload" },
+  { href: "/upload", label: "Upload / JD" },
   { href: "/candidates", label: "Candidates" },
   { href: "/reports", label: "Reports" },
   { href: "/settings", label: "Settings" },

@@ -11,7 +11,7 @@ function isAuthRoute(pathname: string) {
   return pathname.startsWith("/login") || pathname.startsWith("/auth");
 }
 
-function isProtectedRoute(pathname: string) {
+function isProtectedPage(pathname: string) {
   return (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/upload") ||
@@ -19,6 +19,12 @@ function isProtectedRoute(pathname: string) {
     pathname.startsWith("/reports") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/screenings")
+  );
+}
+
+function isProtectedApi(pathname: string) {
+  return (
+    pathname.startsWith("/api/sessions") || pathname.startsWith("/api/candidates")
   );
 }
 
@@ -39,7 +45,14 @@ export async function middleware(request: NextRequest) {
     return updateSession(request);
   }
 
-  if (isProtectedRoute(pathname)) {
+  if (isProtectedApi(pathname)) {
+    return NextResponse.json(
+      { error: "Unauthorized", code: "UNAUTHORIZED" },
+      { status: 401 },
+    );
+  }
+
+  if (isProtectedPage(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);

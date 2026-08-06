@@ -10,10 +10,12 @@ build
 dist
 *.tsbuildinfo
 
-# env
+# env / secrets (never commit)
 .env
 .env.local
+.env.*.local
 .env*.local
+
 
 # debug / logs
 npm-debug.log*
@@ -37,3 +39,4 @@ coverage
 
 # uploads (local fallback)
 tmp/uploads
+data

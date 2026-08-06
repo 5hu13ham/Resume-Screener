@@ -183,7 +183,8 @@ Output (JSON from LLM):
 }
 ```
 
-Provider: any OpenAI-compatible endpoint (`OPENAI_API_BASE`, `OPENAI_API_KEY`, `OPENAI_MODEL`).
+Provider: Gemini via Google’s OpenAI-compatible endpoint by default
+(`OPENAI_API_BASE`, `OPENAI_API_KEY`, `OPENAI_MODEL`). Heuristic fallback when the key is unset.
 
 ## Auth
 
@@ -220,9 +221,9 @@ Environment variables (see `.env.example`):
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-- `OPENAI_API_KEY`
-- `OPENAI_API_BASE`
-- `OPENAI_MODEL`
+- `OPENAI_API_KEY` (Gemini API key; never commit)
+- `OPENAI_API_BASE` (default: `https://generativelanguage.googleapis.com/v1beta/openai`)
+- `OPENAI_MODEL` (default: `gemini-flash-latest`)
 - `MAX_UPLOAD_BYTES`
 - `NEXT_PUBLIC_APP_URL`
 
@@ -239,13 +240,8 @@ Environment variables (see `.env.example`):
 |---|-----------|--------|
 | 1 | Folder structure + architecture | **Done** |
 | 2 | Next.js + Tailwind + tooling bootstrap | **Done** |
-| 3 | Supabase schema, auth, middleware | Pending |
-| 4 | Dashboard + screening UI shells | Pending |
-| 5 | Upload + PDF/DOCX extraction | Pending |
-| 6 | AI scoring + ranking | Pending |
-| 7 | Candidate detail + interview questions | Pending |
-| 8 | Report download | Pending |
-| 9 | Docker + Vercel config + README polish | Pending |
+| 3 | AI Recruiter Copilot workflow | **Done** |
+| 4 | Docker + Vercel config + README polish | Pending |
 
 ## Coding Conventions
 
