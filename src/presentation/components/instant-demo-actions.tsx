@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { readApiErrorMessage } from "@/src/presentation/lib/friendly-errors";
+
 export function InstantDemoActions() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,12 @@ export function InstantDemoActions() {
           reusedExisting?: boolean;
         };
         if (!response.ok || !json.session) {
-          throw new Error(json.error ?? "Failed to start demo.");
+          throw new Error(
+            readApiErrorMessage(
+              json,
+              "We couldn't start the demo right now. Please try again.",
+            ),
+          );
         }
         setStatus(
           json.reusedExisting
@@ -37,7 +44,11 @@ export function InstantDemoActions() {
         router.refresh();
       } catch (err) {
         setStatus(null);
-        setError(err instanceof Error ? err.message : "Demo failed.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "We couldn't start the demo right now. Please try again.",
+        );
       }
     });
   }
@@ -53,7 +64,12 @@ export function InstantDemoActions() {
           error?: string;
         };
         if (!response.ok) {
-          throw new Error(json.error ?? "Failed to reset demo.");
+          throw new Error(
+            readApiErrorMessage(
+              json,
+              "We couldn't reset the demo. Please try again.",
+            ),
+          );
         }
         setStatus(
           `Removed ${json.deletedSessionCount ?? 0} demo session(s). Your real screenings are untouched.`,
@@ -61,7 +77,11 @@ export function InstantDemoActions() {
         router.refresh();
       } catch (err) {
         setStatus(null);
-        setError(err instanceof Error ? err.message : "Reset failed.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "We couldn't reset the demo. Please try again.",
+        );
       }
     });
   }

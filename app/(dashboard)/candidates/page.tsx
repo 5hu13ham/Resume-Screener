@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
 import { CandidateRankTable } from "@/src/presentation/components/candidate-rank-table";
+import { EmptyState } from "@/src/presentation/components/empty-state";
 
 export default async function CandidatesPage() {
   const user = await getCurrentUser();
@@ -35,9 +36,14 @@ export default async function CandidatesPage() {
       {candidates.length ? (
         <CandidateRankTable candidates={candidates} />
       ) : (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-muted">
-          No candidates yet. Start a screening from Upload.
-        </p>
+        <EmptyState
+          title="No candidates to review yet"
+          description="Create a screening with your job description and resumes, or try the instant demo from the dashboard to generate a ranked shortlist."
+          primaryHref="/upload"
+          primaryLabel="Create a screening"
+          secondaryHref="/dashboard"
+          secondaryLabel="Try Demo"
+        />
       )}
     </div>
   );

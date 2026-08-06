@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
 import { CandidateRankTable } from "@/src/presentation/components/candidate-rank-table";
 import { DemoBadge } from "@/src/presentation/components/demo-badge";
+import { SessionActions } from "@/src/presentation/components/session-actions";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,12 @@ export default async function ScreeningDetailPage({ params }: PageProps) {
   if (!session) notFound();
 
   const candidates = await screeningRepository.listCandidatesBySession(user.id, id);
+  const topScore = candidates.reduce<number | null>((best, candidate) => {
+    const score = candidate.evaluation?.overallMatchScore;
+    if (score == null) return best;
+    if (best == null) return score;
+    return Math.max(best, score);
+  }, null);
 
   return (
     <div className="space-y-6">
@@ -37,11 +44,15 @@ export default async function ScreeningDetailPage({ params }: PageProps) {
           <p className="text-sm text-muted">
             Status: <span className="capitalize">{session.status}</span> ·{" "}
             {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
+            {topScore != null ? ` · Top score ${topScore}` : ""}
+            {" · Created "}
+            {new Date(session.createdAt).toLocaleDateString()}
             {session.isDemo ? " · Sample data" : ""}
           </p>
           {session.errorMessage ? (
             <p className="text-sm text-danger">{session.errorMessage}</p>
           ) : null}
+          <SessionActions sessionId={session.id} title={session.title} />
         </div>
         <div className="flex flex-wrap gap-2">
           <a

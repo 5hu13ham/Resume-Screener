@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
 import { DemoBadge } from "@/src/presentation/components/demo-badge";
+import { EmptyState } from "@/src/presentation/components/empty-state";
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
@@ -62,9 +63,14 @@ export default async function ReportsPage() {
           ))}
         </div>
       ) : (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-sm text-muted">
-          No reports yet. Run a screening from Upload to generate one.
-        </p>
+        <EmptyState
+          title="No reports available yet"
+          description="Complete a screening to unlock PDF exports, or try the instant demo to generate a sample report quickly."
+          primaryHref="/upload"
+          primaryLabel="Create a screening"
+          secondaryHref="/dashboard"
+          secondaryLabel="Try Demo"
+        />
       )}
     </div>
   );
