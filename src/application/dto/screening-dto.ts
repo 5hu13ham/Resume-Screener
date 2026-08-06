@@ -48,6 +48,14 @@ export const resumeExtractionSchema = z.object({
   certifications: z.array(z.string()),
 });
 
+export const recruiterDecisionSchema = z.object({
+  recommendation: z.enum(["Strong Interview", "Interview", "Maybe", "Reject"]),
+  confidence: z.enum(["High", "Medium", "Low"]),
+  strengths: z.array(z.string()).max(5),
+  gaps: z.array(z.string()).max(3),
+  interviewFocus: z.array(z.string()).max(3),
+});
+
 export const candidateEvaluationSchema = z.object({
   overallMatchScore: z.number().min(0).max(100),
   skillMatchScore: z.number().min(0).max(100),
@@ -83,6 +91,7 @@ export const candidateEvaluationSchema = z.object({
   ]),
   executiveSummary: z.string(),
   reasoning: scoreReasoningSchema,
+  recruiterDecision: recruiterDecisionSchema.optional(),
 });
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;

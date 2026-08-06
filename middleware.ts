@@ -24,7 +24,9 @@ function isProtectedPage(pathname: string) {
 
 function isProtectedApi(pathname: string) {
   return (
-    pathname.startsWith("/api/sessions") || pathname.startsWith("/api/candidates")
+    pathname.startsWith("/api/sessions") ||
+    pathname.startsWith("/api/candidates") ||
+    pathname.startsWith("/api/demo")
   );
 }
 

@@ -30,6 +30,20 @@ Open [http://localhost:3000](http://localhost:3000).
 - Email: `demo@resumescreener.local`
 - Password: `demo1234`
 
+### Instant Demo (under 60 seconds)
+
+1. Sign in
+2. On the dashboard, click **Try Demo**
+3. The app creates a `Demo Screening` session (Java Backend Engineer JD + 9 sample resumes)
+4. It runs the **same** production screening pipeline and redirects to ranked candidates
+5. Use **Reset Demo** to delete only demo sessions/files (never real user screenings)
+
+Regenerate bundled demo PDFs if needed:
+
+```bash
+npm run fixtures:demo
+```
+
 ### Workflow
 
 1. Go to **Upload / JD**

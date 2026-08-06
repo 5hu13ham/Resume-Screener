@@ -28,4 +28,17 @@ export class LocalFileStorage implements FileStorage {
   async read(storagePath: string): Promise<Buffer> {
     return fs.readFile(storagePath);
   }
+
+  async remove(storagePath: string): Promise<void> {
+    try {
+      await fs.unlink(storagePath);
+    } catch {
+      // Missing file is fine during demo reset.
+    }
+  }
+
+  async removeSessionDirectory(userId: string, sessionId: string): Promise<void> {
+    const dir = path.join(UPLOAD_ROOT, userId, sessionId);
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 }

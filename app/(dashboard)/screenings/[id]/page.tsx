@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
 import { CandidateRankTable } from "@/src/presentation/components/candidate-rank-table";
+import { DemoBadge } from "@/src/presentation/components/demo-badge";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -27,12 +28,16 @@ export default async function ScreeningDetailPage({ params }: PageProps) {
           <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">
             Ranking
           </p>
-          <h1 className="font-[family-name:var(--font-display)] text-3xl text-slate-900">
-            {session.title}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl text-slate-900">
+              {session.title}
+            </h1>
+            {session.isDemo ? <DemoBadge /> : null}
+          </div>
           <p className="text-sm text-muted">
             Status: <span className="capitalize">{session.status}</span> ·{" "}
             {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
+            {session.isDemo ? " · Sample data" : ""}
           </p>
           {session.errorMessage ? (
             <p className="text-sm text-danger">{session.errorMessage}</p>

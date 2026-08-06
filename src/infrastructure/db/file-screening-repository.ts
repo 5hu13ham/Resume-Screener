@@ -109,4 +109,24 @@ export class FileScreeningRepository implements ScreeningRepository {
     await writeStore(store);
     return candidates;
   }
+
+  async deleteSessions(userId: string, sessionIds: string[]): Promise<void> {
+    if (!sessionIds.length) return;
+    const store = await readStore();
+    const allowed = new Set(
+      sessionIds.filter((id) => store.sessions[id]?.userId === userId),
+    );
+
+    for (const sessionId of allowed) {
+      delete store.sessions[sessionId];
+    }
+
+    for (const [candidateId, candidate] of Object.entries(store.candidates)) {
+      if (candidate.userId === userId && allowed.has(candidate.sessionId)) {
+        delete store.candidates[candidateId];
+      }
+    }
+
+    await writeStore(store);
+  }
 }

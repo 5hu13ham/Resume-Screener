@@ -130,10 +130,10 @@ export async function screenSession(params: {
     updatedAt: new Date().toISOString(),
   });
 
-  const processed: Candidate[] = [];
-  for (const candidate of existing) {
-    processed.push(
-      await processCandidate({
+  // Parallelize candidate processing; ranking/evaluation logic is unchanged.
+  const processed = await Promise.all(
+    existing.map((candidate) =>
+      processCandidate({
         candidate,
         session,
         fileStorage: params.fileStorage,
@@ -141,8 +141,8 @@ export async function screenSession(params: {
         aiRecruiter: params.aiRecruiter,
         repository: params.repository,
       }),
-    );
-  }
+    ),
+  );
 
   const ranked = rankCandidates(processed);
   await params.repository.saveCandidates(ranked);

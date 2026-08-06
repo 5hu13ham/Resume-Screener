@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 
+import { ensureRecruiterDecision } from "@/src/application/dto/recruiter-decision";
 import type { Candidate, ScreeningSession } from "@/src/domain/entities/screening";
 import type { ReportGenerator } from "@/src/domain/ports/report-generator";
 
@@ -35,6 +36,31 @@ async function renderPdf(
   });
 }
 
+function writeRecruiterDecision(
+  doc: PDFKit.PDFDocument,
+  evaluation: NonNullable<Candidate["evaluation"]>,
+) {
+  const decision = ensureRecruiterDecision(evaluation);
+  doc.fontSize(14).text("Recruiter Decision");
+  doc
+    .fontSize(10)
+    .text(`${decision.recommendation}  |  Confidence: ${decision.confidence}`);
+  doc.moveDown(0.3);
+  doc.fontSize(10).text("Strengths:");
+  decision.strengths.forEach((item) => doc.text(`✓ ${item}`));
+  doc.moveDown(0.2);
+  doc.text("Gaps:");
+  if (decision.gaps.length) {
+    decision.gaps.forEach((item) => doc.text(`⚠ ${item}`));
+  } else {
+    doc.text("None material");
+  }
+  doc.moveDown(0.2);
+  doc.text("Interview Focus:");
+  decision.interviewFocus.forEach((item) => doc.text(`• ${item}`));
+  doc.moveDown();
+}
+
 export class PdfReportGenerator implements ReportGenerator {
   async generateSessionReport(params: {
     session: ScreeningSession;
@@ -56,13 +82,26 @@ export class PdfReportGenerator implements ReportGenerator {
       params.candidates.forEach((candidate, index) => {
         const name = candidate.extraction?.name ?? candidate.sourceFilename;
         const score = candidate.evaluation?.overallMatchScore ?? "—";
-        const rec = recommendationLabel(candidate.evaluation?.hiringRecommendation);
+        const decision = candidate.evaluation
+          ? ensureRecruiterDecision(candidate.evaluation)
+          : null;
+        const rec =
+          decision?.recommendation ??
+          recommendationLabel(candidate.evaluation?.hiringRecommendation);
         doc
           .fontSize(11)
           .text(
-            `#${candidate.rank ?? index + 1}  ${name}  |  Score: ${score}  |  ${rec}`,
+            `#${candidate.rank ?? index + 1}  ${name}  |  Score: ${score}  |  ${rec}${
+              decision ? `  |  Confidence: ${decision.confidence}` : ""
+            }`,
           );
-        if (candidate.evaluation?.executiveSummary) {
+        if (decision?.interviewFocus.length) {
+          doc
+            .fontSize(9)
+            .fillColor("#333")
+            .text(`Interview focus: ${decision.interviewFocus.join(", ")}`);
+          doc.fillColor("#000");
+        } else if (candidate.evaluation?.executiveSummary) {
           doc.fontSize(9).fillColor("#333").text(candidate.evaluation.executiveSummary);
           doc.fillColor("#000");
         }
@@ -91,6 +130,7 @@ export class PdfReportGenerator implements ReportGenerator {
       doc.moveDown();
 
       if (evaluation) {
+        writeRecruiterDecision(doc, evaluation);
         doc.fontSize(14).text("Scores");
         doc.fontSize(11).text(`Overall: ${evaluation.overallMatchScore}`);
         doc.text(`Skills: ${evaluation.skillMatchScore}`);

@@ -11,7 +11,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "fixtures:resumes": "node scripts/create-sample-resumes.mjs",
-    "verify:workflow": "node scripts/verify-workflow.mjs"
+    "fixtures:demo": "node scripts/create-demo-resumes.mjs",
+    "verify:workflow": "node scripts/verify-workflow.mjs",
+    "verify:demo": "node scripts/verify-instant-demo.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

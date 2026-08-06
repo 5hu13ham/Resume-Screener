@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import type { Candidate, ScreeningSession } from "@/src/domain/entities/screening";
+import { ensureRecruiterDecision } from "@/src/application/dto/recruiter-decision";
+import { DemoBadge } from "@/src/presentation/components/demo-badge";
+import { RecruiterDecisionCard } from "@/src/presentation/components/recruiter-decision-card";
 import { RetryButton } from "@/src/presentation/components/retry-button";
 import { ScoreBar } from "@/src/presentation/components/score-bar";
 import {
@@ -26,9 +29,12 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
           <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">
             Candidate detail
           </p>
-          <h1 className="font-[family-name:var(--font-display)] text-3xl text-slate-900">
-            {name}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl text-slate-900">
+              {name}
+            </h1>
+            {session?.isDemo ? <DemoBadge /> : null}
+          </div>
           <p className="text-sm text-muted">
             Rank #{candidate.rank ?? "—"}
             {session ? (
@@ -43,6 +49,7 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
                 </Link>
               </>
             ) : null}
+            {session?.isDemo ? " · Sample data" : ""}
           </p>
           {evaluation ? (
             <span
@@ -76,54 +83,58 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
       ) : null}
 
       {evaluation ? (
-        <section className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-4 rounded-2xl border border-border bg-white p-5">
-            <h2 className="text-sm font-semibold text-slate-800">Match scores</h2>
-            <ScoreBar
-              label="Overall match"
-              score={evaluation.overallMatchScore}
-              reason={evaluation.reasoning.overall}
-            />
-            <ScoreBar
-              label="Skill match"
-              score={evaluation.skillMatchScore}
-              reason={evaluation.reasoning.skills}
-            />
-            <ScoreBar
-              label="Experience match"
-              score={evaluation.experienceMatchScore}
-              reason={evaluation.reasoning.experience}
-            />
-            <ScoreBar
-              label="Education match"
-              score={evaluation.educationMatchScore}
-              reason={evaluation.reasoning.education}
-            />
-          </div>
+        <>
+          <RecruiterDecisionCard decision={ensureRecruiterDecision(evaluation)} />
 
-          <div className="space-y-4 rounded-2xl border border-border bg-white p-5">
-            <h2 className="text-sm font-semibold text-slate-800">Executive summary</h2>
-            <p className="text-sm leading-6 text-slate-700">
-              {evaluation.executiveSummary}
-            </p>
-            <div>
-              <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                Employment gaps
-              </h3>
-              <p className="mt-1 text-sm text-slate-700">
-                {evaluation.employmentGapDetection.notes}
-              </p>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-4 rounded-2xl border border-border bg-white p-5">
+              <h2 className="text-sm font-semibold text-slate-800">Match scores</h2>
+              <ScoreBar
+                label="Overall match"
+                score={evaluation.overallMatchScore}
+                reason={evaluation.reasoning.overall}
+              />
+              <ScoreBar
+                label="Skill match"
+                score={evaluation.skillMatchScore}
+                reason={evaluation.reasoning.skills}
+              />
+              <ScoreBar
+                label="Experience match"
+                score={evaluation.experienceMatchScore}
+                reason={evaluation.reasoning.experience}
+              />
+              <ScoreBar
+                label="Education match"
+                score={evaluation.educationMatchScore}
+                reason={evaluation.reasoning.education}
+              />
             </div>
-            <div>
-              <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                Job hopper signal
-              </h3>
-              <p className="mt-1 text-sm text-slate-700">
-                {evaluation.jobHopperDetection.notes}
+
+            <div className="space-y-4 rounded-2xl border border-border bg-white p-5">
+              <h2 className="text-sm font-semibold text-slate-800">Executive summary</h2>
+              <p className="text-sm leading-6 text-slate-700">
+                {evaluation.executiveSummary}
               </p>
+              <div>
+                <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  Employment gaps
+                </h3>
+                <p className="mt-1 text-sm text-slate-700">
+                  {evaluation.employmentGapDetection.notes}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  Job hopper signal
+                </h3>
+                <p className="mt-1 text-sm text-slate-700">
+                  {evaluation.jobHopperDetection.notes}
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       ) : null}
 
       {evaluation ? (

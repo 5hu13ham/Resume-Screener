@@ -9,4 +9,6 @@ export interface ScreeningRepository {
   getCandidate(userId: string, candidateId: string): Promise<Candidate | null>;
   saveCandidate(candidate: Candidate): Promise<Candidate>;
   saveCandidates(candidates: Candidate[]): Promise<Candidate[]>;
+  /** Deletes sessions and their candidates. Caller must only pass demo session ids for reset. */
+  deleteSessions(userId: string, sessionIds: string[]): Promise<void>;
 }

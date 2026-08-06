@@ -20,6 +20,22 @@ export type HiringRecommendation =
   | "no"
   | "strong_no";
 
+export type RecruiterDecisionRecommendation =
+  | "Strong Interview"
+  | "Interview"
+  | "Maybe"
+  | "Reject";
+
+export type RecruiterDecisionConfidence = "High" | "Medium" | "Low";
+
+export type RecruiterDecision = {
+  recommendation: RecruiterDecisionRecommendation;
+  confidence: RecruiterDecisionConfidence;
+  strengths: string[];
+  gaps: string[];
+  interviewFocus: string[];
+};
+
 export type ScoreReasoning = {
   overall: string;
   skills: string;
@@ -80,6 +96,8 @@ export type CandidateEvaluation = {
   hiringRecommendation: HiringRecommendation;
   executiveSummary: string;
   reasoning: ScoreReasoning;
+  /** Concise recruiter-facing decision card; optional on legacy stored rows. */
+  recruiterDecision?: RecruiterDecision;
 };
 
 export type ScreeningSession = {
@@ -89,6 +107,8 @@ export type ScreeningSession = {
   jobDescription: string;
   status: SessionStatus;
   errorMessage: string | null;
+  /** Sample Instant Demo session; never delete non-demo user data on reset. */
+  isDemo?: boolean;
   createdAt: string;
   updatedAt: string;
 };

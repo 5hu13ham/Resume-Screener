@@ -4,6 +4,7 @@ import type {
   ResumeExtraction,
 } from "@/src/domain/entities/screening";
 import type { AiRecruiterService } from "@/src/domain/ports/ai-recruiter";
+import { buildHeuristicRecruiterDecision } from "@/src/application/dto/recruiter-decision";
 
 const COMMON_SKILLS = [
   "javascript",
@@ -14,6 +15,12 @@ const COMMON_SKILLS = [
   "node.js",
   "python",
   "java",
+  "spring boot",
+  "kafka",
+  "microservices",
+  "hibernate",
+  "mysql",
+  "redis",
   "sql",
   "postgresql",
   "mongodb",
@@ -195,6 +202,16 @@ export class HeuristicRecruiterService implements AiRecruiterService {
       .filter((skill) => !jdSkills.includes(skill.toLowerCase()))
       .slice(0, 5);
 
+    const recruiterDecision = buildHeuristicRecruiterDecision({
+      overallMatchScore,
+      skillMatchScore,
+      experienceMatchScore,
+      educationMatchScore,
+      matchedSkills,
+      missingSkills: missingSkills.slice(0, 8),
+      extraction: params.extraction,
+    });
+
     return {
       overallMatchScore,
       skillMatchScore,
@@ -247,6 +264,7 @@ export class HeuristicRecruiterService implements AiRecruiterService {
             ? "Education section present and counted as role-supporting."
             : "Limited education details found in the resume text.",
       },
+      recruiterDecision,
     };
   }
 }

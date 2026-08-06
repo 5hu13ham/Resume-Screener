@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
+import { DemoBadge } from "@/src/presentation/components/demo-badge";
+import { InstantDemoActions } from "@/src/presentation/components/instant-demo-actions";
 import {
   formatRecommendation,
   recommendationTone,
@@ -19,6 +21,7 @@ export default async function DashboardPage() {
     ? await container.screeningRepository.listCandidates(user.id)
     : [];
 
+  const sessionById = new Map(sessions.map((session) => [session.id, session]));
   const top = candidates.filter((c) => c.evaluation).slice(0, 5);
 
   return (
@@ -31,10 +34,12 @@ export default async function DashboardPage() {
           Who should you interview?
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
-          Welcome back, {user?.fullName.split(" ")[0] ?? "recruiter"}. Run a
-          screening to rank candidates against a job description.
+          Welcome back, {user?.fullName.split(" ")[0] ?? "recruiter"}. Try the instant
+          demo, or run a real screening with your own resumes.
         </p>
       </header>
+
+      <InstantDemoActions />
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-border bg-white p-5">
@@ -70,42 +75,50 @@ export default async function DashboardPage() {
         </div>
         {top.length ? (
           <div className="space-y-2">
-            {top.map((candidate) => (
-              <Link
-                key={candidate.id}
-                href={`/candidates/${candidate.id}`}
-                className="flex flex-col gap-2 rounded-2xl border border-border bg-white px-4 py-3 transition hover:border-brand md:flex-row md:items-center md:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">
-                    {candidate.extraction?.name ?? candidate.sourceFilename}
-                  </p>
-                  <p className="text-xs text-muted">Rank #{candidate.rank ?? "—"}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "text-sm font-semibold",
-                      scoreTone(candidate.evaluation?.overallMatchScore),
-                    )}
-                  >
-                    {candidate.evaluation?.overallMatchScore}/100
-                  </span>
-                  <span
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium",
-                      recommendationTone(candidate.evaluation?.hiringRecommendation),
-                    )}
-                  >
-                    {formatRecommendation(candidate.evaluation?.hiringRecommendation)}
-                  </span>
-                </div>
-              </Link>
-            ))}
+            {top.map((candidate) => {
+              const isDemo = sessionById.get(candidate.sessionId)?.isDemo === true;
+              return (
+                <Link
+                  key={candidate.id}
+                  href={`/candidates/${candidate.id}`}
+                  className="flex flex-col gap-2 rounded-2xl border border-border bg-white px-4 py-3 transition hover:border-brand md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {candidate.extraction?.name ?? candidate.sourceFilename}
+                      </p>
+                      <p className="text-xs text-muted">
+                        Rank #{candidate.rank ?? "—"}
+                      </p>
+                    </div>
+                    {isDemo ? <DemoBadge /> : null}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        "text-sm font-semibold",
+                        scoreTone(candidate.evaluation?.overallMatchScore),
+                      )}
+                    >
+                      {candidate.evaluation?.overallMatchScore}/100
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs font-medium",
+                        recommendationTone(candidate.evaluation?.hiringRecommendation),
+                      )}
+                    >
+                      {formatRecommendation(candidate.evaluation?.hiringRecommendation)}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-muted">
-            No scored candidates yet.
+            No scored candidates yet. Click Try Demo to generate a ranked shortlist.
           </p>
         )}
       </section>
@@ -121,7 +134,10 @@ export default async function DashboardPage() {
                 className="block rounded-2xl border border-border bg-white px-4 py-3 transition hover:border-brand"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium text-slate-900">{session.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-slate-900">{session.title}</p>
+                    {session.isDemo ? <DemoBadge /> : null}
+                  </div>
                   <span className="text-xs capitalize text-muted">{session.status}</span>
                 </div>
               </Link>
@@ -129,7 +145,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-muted">
-            Create your first screening from Upload.
+            Create your first screening from Upload, or try the instant demo.
           </p>
         )}
       </section>

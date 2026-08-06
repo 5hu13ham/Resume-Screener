@@ -4,6 +4,7 @@ import {
   candidateEvaluationSchema,
   resumeExtractionSchema,
 } from "@/src/application/dto/screening-dto";
+import { buildHeuristicRecruiterDecision } from "@/src/application/dto/recruiter-decision";
 import type {
   CandidateEvaluation,
   ResumeExtraction,
@@ -137,11 +138,46 @@ jobHopperDetection { detected, averageTenureMonths, notes },
 recommendedInterviewQuestions (string[]),
 hiringRecommendation ("strong_yes"|"yes"|"maybe"|"no"|"strong_no"),
 executiveSummary (string),
-reasoning { overall, skills, experience, education }.
-Be strict, evidence-based, and useful for deciding who to interview.`,
+reasoning { overall, skills, experience, education },
+recruiterDecision {
+  recommendation: "Strong Interview" | "Interview" | "Maybe" | "Reject",
+  confidence: "High" | "Medium" | "Low",
+  strengths: string[] (max 5, concise, recruiter-friendly, evidence from resume+JD),
+  gaps: string[] (max 3, only meaningful missing skills/experience — do not invent),
+  interviewFocus: string[] (max 3, interviewer validation topics derived from gaps/weak evidence; e.g. Kafka, Docker, System Design, Leadership, AWS, Testing)
+}
+Be strict, evidence-based, and useful for deciding who to interview.
+Generate recruiterDecision in the SAME response — do not omit it.`,
           `Job Description:\n${params.jobDescription.slice(0, 8000)}\n\nStructured Extraction:\n${JSON.stringify(params.extraction)}\n\nResume Text:\n${params.resumeText.slice(0, 12000)}`,
         );
-        return candidateEvaluationSchema.parse(extractJson(content));
+        const parsed = candidateEvaluationSchema.parse(extractJson(content));
+        const recruiterDecision =
+          parsed.recruiterDecision ??
+          buildHeuristicRecruiterDecision({
+            overallMatchScore: parsed.overallMatchScore,
+            skillMatchScore: parsed.skillMatchScore,
+            experienceMatchScore: parsed.experienceMatchScore,
+            educationMatchScore: parsed.educationMatchScore,
+            matchedSkills: params.extraction.skills.filter(
+              (skill) =>
+                !parsed.missingSkills
+                  .map((item) => item.toLowerCase())
+                  .includes(skill.toLowerCase()),
+            ),
+            missingSkills: parsed.missingSkills,
+            extraction: params.extraction,
+          });
+
+        return {
+          ...parsed,
+          recruiterDecision: {
+            recommendation: recruiterDecision.recommendation,
+            confidence: recruiterDecision.confidence,
+            strengths: recruiterDecision.strengths.slice(0, 5),
+            gaps: recruiterDecision.gaps.slice(0, 3),
+            interviewFocus: recruiterDecision.interviewFocus.slice(0, 3),
+          },
+        };
       });
     } catch (error) {
       console.error("LLM request failed", error);

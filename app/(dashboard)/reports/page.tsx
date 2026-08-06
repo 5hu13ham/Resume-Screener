@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/src/application/use-cases/get-current-user";
 import { getContainer } from "@/src/infrastructure/di/container";
+import { DemoBadge } from "@/src/presentation/components/demo-badge";
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
@@ -35,7 +36,10 @@ export default async function ReportsPage() {
               className="flex flex-col gap-3 rounded-2xl border border-border bg-white p-5 md:flex-row md:items-center md:justify-between"
             >
               <div>
-                <h2 className="font-semibold text-slate-900">{session.title}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold text-slate-900">{session.title}</h2>
+                  {session.isDemo ? <DemoBadge /> : null}
+                </div>
                 <p className="text-xs text-muted">
                   {new Date(session.updatedAt).toLocaleString()} · {session.status}
                 </p>
