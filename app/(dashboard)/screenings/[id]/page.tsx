@@ -52,7 +52,7 @@ export default async function ScreeningDetailPage({ params }: PageProps) {
           {session.errorMessage ? (
             <p className="text-sm text-danger">{session.errorMessage}</p>
           ) : null}
-          <SessionActions sessionId={session.id} title={session.title} />
+          {!user.isDemo ? <SessionActions sessionId={session.id} title={session.title} /> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <a
@@ -61,12 +61,12 @@ export default async function ScreeningDetailPage({ params }: PageProps) {
           >
             Download PDF report
           </a>
-          <Link
+          {!user.isDemo ? <Link
             href="/upload"
             className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-slate-700"
           >
             New screening
-          </Link>
+          </Link> : null}
         </div>
       </header>
 
