@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
+    const user = await requireUser({ realAccountOnly: true });
     const body = await request.json();
     const { screeningRepository } = getContainer();
     const session = await createScreeningSession({
