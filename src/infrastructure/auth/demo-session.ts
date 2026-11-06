@@ -51,7 +51,7 @@ export async function verifyDemoSessionToken(token: string | undefined): Promise
   try {
     const payload = parts[0]!;
     const verified = await crypto.subtle.verify(
-      "HMAC", await importKey(secret), decode(parts[1]!),
+      "HMAC", await importKey(secret), new Uint8Array([...decode(parts[1]!)]),
       new TextEncoder().encode(payload),
     );
     if (!verified) return null;
