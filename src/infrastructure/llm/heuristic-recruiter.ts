@@ -78,9 +78,16 @@ function extractName(text: string): string {
   return firstLine.replace(/[^a-zA-Z\s.'-]/g, "").trim() || "Unknown Candidate";
 }
 
-function extractSkills(text: string): string[] {
+function containsSkill(text: string, skill: string): boolean {
+  const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\function extractSkills(text: string): string[] {
   const lower = text.toLowerCase();
   return COMMON_SKILLS.filter((skill) => lower.includes(skill.toLowerCase()));
+}");
+  const regex = new RegExp("(^|[^a-z0-9])" + escaped + "(?=$|[^a-z0-9])", "i");
+  return regex.test(text);
+}
+function extractSkills(text: string): string[] {
+  return COMMON_SKILLS.filter((skill) => containsSkill(text, skill));
 }
 
 function extractYears(text: string): number | null {
@@ -111,6 +118,7 @@ export class HeuristicRecruiterService implements AiRecruiterService {
     const years = extractYears(resumeText);
 
     return {
+      provenance: { engine: "heuristic", model: "keyword-v1" },
       name: extractName(resumeText),
       contact: {
         email: extractEmail(resumeText),
@@ -158,7 +166,7 @@ export class HeuristicRecruiterService implements AiRecruiterService {
     const jdTokens = tokenize(params.jobDescription);
     const resumeTokens = new Set(tokenize(params.resumeText));
     const jdSkills = COMMON_SKILLS.filter((skill) =>
-      params.jobDescription.toLowerCase().includes(skill),
+      containsSkill(params.jobDescription, skill),
     );
     const resumeSkills = new Set(
       params.extraction.skills.map((skill) => skill.toLowerCase()),
@@ -213,6 +221,13 @@ export class HeuristicRecruiterService implements AiRecruiterService {
     });
 
     return {
+      provenance: {
+        engine: "heuristic",
+        model: "keyword-v1",
+        extractionEngine: params.extraction.provenance?.engine,
+        rubricVersion: "portfolio-v1",
+        generatedAt: new Date().toISOString(),
+      },
       overallMatchScore,
       skillMatchScore,
       experienceMatchScore,
