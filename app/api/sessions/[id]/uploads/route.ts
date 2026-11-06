@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const user = await requireUser();
+    const user = await requireUser({ realAccountOnly: true });
     const { id } = await params;
     const formData = await request.formData();
     const files = formData.getAll("files");
