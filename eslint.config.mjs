@@ -14,7 +14,7 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   eslintConfigPrettier,
   {
-    ignores: [".next/**", "node_modules/**", "docker/**"],
+    ignores: [".next/**", "node_modules/**", "docker/**", "next-env.d.ts"],
   },
 ];
 
