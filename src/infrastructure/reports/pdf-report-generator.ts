@@ -7,15 +7,15 @@ import type { ReportGenerator } from "@/src/domain/ports/report-generator";
 function recommendationLabel(value: string | undefined): string {
   switch (value) {
     case "strong_yes":
-      return "Strong Yes";
+      return "High alignment";
     case "yes":
-      return "Yes";
+      return "Good alignment";
     case "maybe":
       return "Maybe";
     case "no":
-      return "No";
+      return "Needs human review";
     case "strong_no":
-      return "Strong No";
+      return "Needs human review";
     default:
       return "Pending";
   }
@@ -44,7 +44,7 @@ function writeRecruiterDecision(
   doc.fontSize(14).text("Recruiter Decision");
   doc
     .fontSize(10)
-    .text(`${decision.recommendation}  |  Confidence: ${decision.confidence}`);
+    .text(`${decision.recommendation === "Reject" ? "Needs human review" : decision.recommendation}  |  Indicative confidence: ${decision.confidence}`);
   doc.moveDown(0.3);
   doc.fontSize(10).text("Strengths:");
   decision.strengths.forEach((item) => doc.text(`✓ ${item}`));
@@ -68,6 +68,7 @@ export class PdfReportGenerator implements ReportGenerator {
   }): Promise<Buffer> {
     return renderPdf((doc) => {
       doc.fontSize(20).text("AI Resume Screening Report", { underline: true });
+      doc.fontSize(9).text("Human review required. Uncalibrated indicators, not automated hiring decisions.");
       doc.moveDown();
       doc.fontSize(12).text(`Session: ${params.session.title}`);
       doc.text(`Generated: ${new Date().toLocaleString()}`);
@@ -120,6 +121,7 @@ export class PdfReportGenerator implements ReportGenerator {
 
     return renderPdf((doc) => {
       doc.fontSize(20).text("Candidate Screening Report", { underline: true });
+      doc.fontSize(9).text("For interview preparation only. Not a hiring decision.");
       doc.moveDown();
       doc.fontSize(12).text(`Candidate: ${extraction?.name ?? candidate.sourceFilename}`);
       doc.text(`Session: ${session.title}`);
@@ -131,6 +133,8 @@ export class PdfReportGenerator implements ReportGenerator {
 
       if (evaluation) {
         writeRecruiterDecision(doc, evaluation);
+        doc.fontSize(9).text(`Evaluation: ${evaluation.provenance?.engine ?? "unrecorded"} / ${evaluation.provenance?.model ?? "legacy"}, rubric ${evaluation.provenance?.rubricVersion ?? "unknown"}`);
+        doc.moveDown(0.4);
         doc.fontSize(14).text("Scores");
         doc.fontSize(11).text(`Overall: ${evaluation.overallMatchScore}`);
         doc.text(`Skills: ${evaluation.skillMatchScore}`);

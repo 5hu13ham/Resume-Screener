@@ -23,7 +23,7 @@ export function AppShell({ user, children }: AppShellProps) {
             </Link>
             <p className="mt-1 text-sm text-muted">AI screening workspace</p>
           </div>
-          <SidebarNav />
+          <SidebarNav isDemo={user.isDemo} />
         </div>
 
         <div className="mt-8 space-y-3 border-t border-border pt-4">

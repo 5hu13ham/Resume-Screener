@@ -27,7 +27,7 @@ export async function GET(_request: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
-    const user = await requireUser();
+    const user = await requireUser({ realAccountOnly: true });
     const { id } = await params;
     const body = (await request.json()) as { title?: string };
     const container = getContainer();
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_request: Request, { params }: Params) {
   try {
-    const user = await requireUser();
+    const user = await requireUser({ realAccountOnly: true });
     const { id } = await params;
     const container = getContainer();
     const result = await deleteScreeningSession({

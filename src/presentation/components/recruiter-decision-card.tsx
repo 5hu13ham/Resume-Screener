@@ -37,7 +37,7 @@ export function RecruiterDecisionCard({ decision }: RecruiterDecisionCardProps) 
   return (
     <section className="rounded-2xl border border-border bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-800">Recruiter Decision</h2>
+        <h2 className="text-sm font-semibold text-slate-800">AI review guidance</h2>
         <div className="flex flex-wrap gap-2">
           <span
             className={cn(
@@ -45,7 +45,7 @@ export function RecruiterDecisionCard({ decision }: RecruiterDecisionCardProps) 
               recommendationTone(decision.recommendation),
             )}
           >
-            {decision.recommendation}
+            {decision.recommendation === "Reject" ? "Needs human review" : decision.recommendation}
           </span>
           <span
             className={cn(
@@ -58,6 +58,7 @@ export function RecruiterDecisionCard({ decision }: RecruiterDecisionCardProps) 
         </div>
       </div>
 
+      <p className="mt-3 text-xs leading-5 text-slate-500">Uncalibrated AI suggestions for interview preparation; never an automatic hiring decision.</p>
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         <div>
           <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">

@@ -1,9 +1,28 @@
 import type { Candidate, ScreeningSession } from "@/src/domain/entities/screening";
-import { NotFoundError } from "@/src/domain/errors/app-error";
+import { NotFoundError, ValidationError } from "@/src/domain/errors/app-error";
 import type { AiRecruiterService } from "@/src/domain/ports/ai-recruiter";
 import type { FileStorage } from "@/src/domain/ports/file-storage";
 import type { ResumeParser } from "@/src/domain/ports/resume-parser";
 import type { ScreeningRepository } from "@/src/domain/ports/screening-repository";
+
+/** Bounds external AI requests and memory pressure without a third-party worker. */
+export async function mapConcurrent<T, U>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<U>,
+): Promise<U[]> {
+  const output: U[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(Math.max(limit, 1), items.length) },
+    async () => {
+      while (next < items.length) {
+        const current = next++;
+        output[current] = await worker(items[current]!);
+      }
+    });
+  await Promise.all(workers);
+  return output;
+}
 
 async function processCandidate(params: {
   candidate: Candidate;
@@ -15,6 +34,9 @@ async function processCandidate(params: {
 }): Promise<Candidate> {
   let candidate: Candidate = {
     ...params.candidate,
+    evaluation: null,
+    extraction: null,
+    rank: null,
     status: "parsing",
     errorMessage: null,
     updatedAt: new Date().toISOString(),
@@ -76,7 +98,7 @@ async function processCandidate(params: {
 
 function rankCandidates(candidates: Candidate[]): Candidate[] {
   const ready = candidates
-    .filter((c) => c.evaluation)
+    .filter((c) => c.status === "ready" && c.evaluation)
     .sort(
       (a, b) =>
         (b.evaluation?.overallMatchScore ?? 0) -
@@ -89,7 +111,7 @@ function rankCandidates(candidates: Candidate[]): Candidate[] {
     }));
 
   const others = candidates
-    .filter((c) => !c.evaluation)
+    .filter((c) => c.status !== "ready" || !c.evaluation)
     .map((candidate) => ({
       ...candidate,
       rank: null,
@@ -115,6 +137,10 @@ export async function screenSession(params: {
     throw new NotFoundError("Screening session not found.");
   }
 
+  if (session.status === "processing") {
+    throw new ValidationError("This screening is already running.");
+  }
+
   const existing = await params.repository.listCandidatesBySession(
     params.userId,
     params.sessionId,
@@ -130,9 +156,8 @@ export async function screenSession(params: {
     updatedAt: new Date().toISOString(),
   });
 
-  // Parallelize candidate processing; ranking/evaluation logic is unchanged.
-  const processed = await Promise.all(
-    existing.map((candidate) =>
+  // Cap LLM requests at two concurrent candidates; isolate errors per candidate.
+  const processed = await mapConcurrent(existing, 2, (candidate) =>
       processCandidate({
         candidate,
         session,
@@ -141,7 +166,6 @@ export async function screenSession(params: {
         aiRecruiter: params.aiRecruiter,
         repository: params.repository,
       }),
-    ),
   );
 
   const ranked = rankCandidates(processed);

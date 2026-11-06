@@ -43,7 +43,17 @@ export type ScoreReasoning = {
   education: string;
 };
 
+export type AiProvenance = {
+  engine: "gemini" | "heuristic";
+  model: string;
+  extractionEngine?: "gemini" | "heuristic";
+  fallbackReason?: "missing_api_key" | "upstream_error";
+  rubricVersion: "portfolio-v1";
+  generatedAt: string;
+};
+
 export type ResumeExtraction = {
+  provenance?: Pick<AiProvenance, "engine" | "model" | "fallbackReason">;
   name: string;
   contact: {
     email: string | null;
@@ -74,6 +84,8 @@ export type ResumeExtraction = {
 };
 
 export type CandidateEvaluation = {
+  /** Audit metadata, not a measure of model certainty or hiring suitability. */
+  provenance?: AiProvenance;
   overallMatchScore: number;
   skillMatchScore: number;
   experienceMatchScore: number;

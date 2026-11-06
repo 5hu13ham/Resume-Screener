@@ -1,253 +1,58 @@
-# AI Resume Screener — Architecture
+# AI Resume Screener — Current architecture
 
-Production-ready SaaS for screening resumes against a job description using AI scoring, ranking, and interview prep.
+## Scope and status
 
-## Goals
+This is a **synthetic-data, portfolio-first demonstration**, not a production recruitment SaaS. Code on `feature/portfolio-safe-demo-ai-reliability-2026-11-06` is based on `cursor/ai-recruiter-copilot-gemini`. Current persistence uses a local JSON repository and local uploaded files—not PostgreSQL, Supabase Storage or durable serverless storage.
 
-- Clean Architecture with clear dependency direction
-- Supabase Auth + PostgreSQL as the system of record
-- OpenAI-compatible LLM for scoring and interview questions
-- Next.js App Router for UI and BFF API routes
-- Deployable on Vercel and via Docker
-
-## High-Level System
+## Layers and dependency rule
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  Presentation (Next.js App Router + React)                  │
-│  Pages · Server Actions · API Routes · UI Components        │
-└────────────────────────────┬────────────────────────────────┘
-                             │ depends on
-┌────────────────────────────▼────────────────────────────────┐
-│  Application (Use Cases / Orchestration)                    │
-│  Upload · Extract · Screen · Rank · Questions · Reports     │
-└────────────────────────────┬────────────────────────────────┘
-                             │ depends on
-┌────────────────────────────▼────────────────────────────────┐
-│  Domain (Entities · Ports · Rules)                          │
-│  Candidate · Job · Screening · Score · InterviewQuestion    │
-└─────────────────────────────────────────────────────────────┘
-                             ▲
-                             │ implements ports
-┌────────────────────────────┴────────────────────────────────┐
-│  Infrastructure                                             │
-│  Supabase Auth/DB/Storage · OpenAI client · PDF/DOCX parsers│
-└─────────────────────────────────────────────────────────────┘
+app/ + src/presentation/        Next.js routes / React UI / auth controls
+                   │
+src/application/               Upload, screen, rank, report, reset use cases
+                   │
+src/domain/                    Candidate, session, evaluation, interfaces
+                   ▲
+src/infrastructure/            File repository and storage; parsers; AI; PDF generator
+                   │
+             runtime DI container
 ```
 
-**Dependency rule:** outer layers depend inward. Domain has no framework imports. Infrastructure implements domain ports. Presentation/application never import concrete DB/LLM clients directly — only ports/factories wired in composition roots.
+Domain/application code uses interfaces such as `ScreeningRepository`, `FileStorage`, `ResumeParser` and `AiRecruiterService`. The container selects concrete adapters. This makes a later SaaS migration possible without rewriting core use cases.
 
-## Layers
+## Public sandbox trust boundaries
 
-### 1. Domain (`src/domain`)
+1. A browser POST to `/api/demo/session` receives an HMAC-SHA256 signed, two-hour HttpOnly cookie (SameSite Strict, HTTPS Secure).
+2. Edge middleware verifies the signature, expiry and same-origin mutation requests.
+3. The server derives a distinct demo user ID from each signed session; neither user ID nor storage path is accepted from the client as authority.
+4. Public demo users may see their own synthetic sessions, candidates, reports and run/reset sample data; write APIs for real uploads and arbitrary records require a non-demo authenticated user.
+5. Demo screening uses nine bundled **synthetic** PDFs. The heuristic engine is used even if a private Gemini API key is configured.
+6. No public credentials or shared fixed-value session cookie grant access.
 
-Pure business concepts and contracts.
-
-| Area | Responsibility |
-|------|----------------|
-| `entities/` | `Candidate`, `JobDescription`, `ScreeningResult`, `ScoreBreakdown`, `InterviewQuestion`, `ScreeningJob` |
-| `value-objects/` | `Email`, `Score (0–100)`, `FileType`, `Rank` |
-| `ports/` | Repository & service interfaces (`ICandidateRepository`, `ILlmScoringService`, `IResumeParser`, `IStorageService`, `IAuthService`) |
-| `errors/` | Domain errors (`NotFoundError`, `ValidationError`, `UnauthorizedError`) |
-
-No Next.js, Supabase, or OpenAI imports here.
-
-### 2. Application (`src/application`)
-
-Use cases that orchestrate domain logic.
-
-| Use case | Description |
-|----------|-------------|
-| `AuthenticateUser` | Session/login flows via auth port |
-| `CreateScreeningSession` | Create a screening with pasted JD |
-| `UploadResumes` | Accept multi-file upload, store blobs, create candidates |
-| `ExtractResumeText` | PDF/DOCX → plain text |
-| `ScoreCandidates` | JD + resume text → AI scores + rationale |
-| `RankCandidates` | Sort/persist ranking |
-| `GetCandidateDetail` | Candidate + scores + questions |
-| `GenerateInterviewQuestions` | Role-specific questions from JD + resume gaps |
-| `GenerateReport` | Downloadable screening report (PDF/JSON) |
-| `ListDashboardData` | Sessions, counts, recent rankings |
-
-DTOs live under `src/application/dto`.
-
-### 3. Infrastructure (`src/infrastructure`)
-
-Adapters that implement ports.
-
-| Adapter | Tech |
-|---------|------|
-| `auth/supabase-auth.ts` | Supabase Auth |
-| `db/supabase-repositories.ts` | PostgreSQL via Supabase client |
-| `storage/supabase-storage.ts` | Resume file storage |
-| `llm/openai-compatible-client.ts` | OpenAI-compatible chat completions |
-| `parsers/pdf-parser.ts` | PDF text extraction |
-| `parsers/docx-parser.ts` | DOCX text extraction |
-| `reports/report-generator.ts` | Report export |
-
-Composition/wiring: `src/infrastructure/di/` (factories used by API routes / server actions).
-
-### 4. Presentation (`src/presentation` + `app/`)
-
-| Area | Responsibility |
-|------|----------------|
-| `app/(auth)/` | Login / callback routes |
-| `app/(dashboard)/` | Dashboard, upload, screening, candidate detail |
-| `app/api/` | Thin HTTP adapters calling use cases |
-| `src/presentation/components/` | UI components |
-| `src/presentation/hooks/` | Client hooks |
-| `src/presentation/lib/` | UI helpers (formatters, cn) |
-
-## Core User Flows
-
-### Screening flow
+## Screening
 
 ```text
-Login → Dashboard → New Screening
-  → Paste Job Description
-  → Upload resumes (PDF/DOCX, multi)
-  → Extract text
-  → AI score each candidate
-  → Rank list
-  → Candidate detail (score, strengths/gaps, interview Qs)
-  → Download report
+Bundled sample PDFs → per-session upload → PDF parser → text extraction
+→ heuristic extraction → heuristic evaluation + model/rubric provenance
+→ rank by illustrative alignment indicator → candidate summary / PDF report
 ```
 
-### Sequence (simplified)
+Private authenticated mode can use Gemini via the OpenAI SDK against Google's compatible endpoint. Gemini response JSON is validated with Zod; exceptions trigger a heuristic fallback with a recorded reason. This private workflow is **not** a production data-processing service.
 
-```text
-Browser → API/Server Action → Use Case → Ports
-                              ├→ Storage (files)
-                              ├→ Parser (text)
-                              ├→ LLM (score / questions)
-                              └→ Repository (persist)
-```
+`screenSession` limits processing to two candidates in parallel. Failed candidate evaluations are not included among ranked-ready candidates. Retrying a private candidate replaces stale evaluation metadata.
 
-## Data Model (PostgreSQL / Supabase)
+## Storage consistency
 
-```text
-profiles
-  id (uuid, fk auth.users)
-  full_name, avatar_url, created_at
+`FileScreeningRepository` has a process-local write queue and uses atomic temporary-file rename to reduce lost updates in one Node process. Candidate access filters on server-derived user IDs. `LocalFileStorage` scopes file paths under the upload root and uses randomized names.
 
-screening_sessions
-  id, user_id, title, job_description, status, created_at, updated_at
+**Not suitable for multiple server replicas/serverless:** no inter-process locking, durable queue, backup/restore or lifecycle retention. A real deployment needs transactional SQL/NoSQL storage, object storage and asynchronous workers.
 
-candidates
-  id, session_id, full_name, email, source_filename
-  storage_path, extracted_text, created_at
+## Screening limitations
 
-screening_results
-  id, candidate_id, session_id
-  overall_score, skills_score, experience_score, education_score
-  summary, strengths jsonb, gaps jsonb, raw_llm jsonb
-  rank, created_at
+Scores measure heuristic text/skills overlap, not candidate merit or hiring performance. Employment history, career gaps and educational details must not be used as unreviewed exclusion signals. All evaluations require human review. Prompt injection defenses are best-effort; uploaded résumés and job descriptions are untrusted inputs. Even Gemini output validated against a schema can still be factually incorrect.
 
-interview_questions
-  id, candidate_id, session_id
-  questions jsonb, created_at
-```
+## Deployment and controls
 
-RLS: users can only read/write their own rows (`auth.uid() = user_id` / via session ownership).
+Local Next.js development is supported. GitHub Actions runs TypeScript/ESLint/build checks, then boots the app and runs synthetic-demo and security boundary smoke tests. A persistent cloud deployment, rate limiting, advanced telemetry, secure multi-user database and GDPR/DPDP data processing controls are not claimed.
 
-## API Surface (planned)
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/auth/callback` | Auth callback helper |
-| GET | `/api/sessions` | List screening sessions |
-| POST | `/api/sessions` | Create session + JD |
-| POST | `/api/sessions/:id/uploads` | Multi-file upload |
-| POST | `/api/sessions/:id/screen` | Extract + score + rank |
-| GET | `/api/sessions/:id/candidates` | Ranked candidates |
-| GET | `/api/candidates/:id` | Detail |
-| POST | `/api/candidates/:id/questions` | Generate interview questions |
-| GET | `/api/sessions/:id/report` | Download report |
-
-Exact shapes will be finalized when API routes are implemented.
-
-## AI Scoring Contract
-
-Input: job description + extracted resume text  
-Output (JSON from LLM):
-
-```json
-{
-  "overall_score": 0-100,
-  "skills_score": 0-100,
-  "experience_score": 0-100,
-  "education_score": 0-100,
-  "summary": "string",
-  "strengths": ["string"],
-  "gaps": ["string"]
-}
-```
-
-Provider: Gemini via Google’s OpenAI-compatible endpoint by default
-(`OPENAI_API_BASE`, `OPENAI_API_KEY`, `OPENAI_MODEL`). Heuristic fallback when the key is unset.
-
-## Auth
-
-- Supabase email/password (and optional OAuth later)
-- Middleware protects dashboard routes
-- Server components/actions use Supabase server client
-- Client components use browser client
-
-## File Upload
-
-- Accept `.pdf`, `.docx`
-- Max size configurable (`MAX_UPLOAD_BYTES`)
-- Multi-file per session
-- Store in Supabase Storage bucket `resumes`
-- Persist metadata + extracted text in PostgreSQL
-
-## Frontend IA
-
-| Route | Purpose |
-|-------|---------|
-| `/login` | Auth |
-| `/dashboard` | Sessions overview |
-| `/screenings/new` | JD + uploads |
-| `/screenings/[id]` | Ranked results |
-| `/candidates/[id]` | Detail + interview questions |
-| `/screenings/[id]/report` | Report download trigger |
-
-Responsive: mobile-first Tailwind layouts; primary workflows usable on small screens.
-
-## Configuration
-
-Environment variables (see `.env.example`):
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-only)
-- `OPENAI_API_KEY` (Gemini API key; never commit)
-- `OPENAI_API_BASE` (default: `https://generativelanguage.googleapis.com/v1beta/openai`)
-- `OPENAI_MODEL` (default: `gemini-flash-latest`)
-- `MAX_UPLOAD_BYTES`
-- `NEXT_PUBLIC_APP_URL`
-
-## Deployment
-
-| Target | Notes |
-|--------|-------|
-| **Vercel** | App Router; set env vars; Supabase external |
-| **Docker** | Multi-stage `Dockerfile` + `docker-compose.yml` for local/prod-like runs |
-
-## Milestone Plan
-
-| # | Milestone | Status |
-|---|-----------|--------|
-| 1 | Folder structure + architecture | **Done** |
-| 2 | Next.js + Tailwind + tooling bootstrap | **Done** |
-| 3 | AI Recruiter Copilot workflow | **Done** |
-| 4 | Docker + Vercel config + README polish | Pending |
-
-## Coding Conventions
-
-- TypeScript strict mode
-- Named exports preferred for domain/application
-- API routes stay thin; business logic in use cases
-- No secrets in client bundles
-- Prefer server components; client only for interactivity
-- Keep UI focused and responsive; avoid dashboard clutter on marketing surfaces (product UI may use cards for interactive lists)
+See [portfolio release plan](docs/PORTFOLIO_RELEASE_PLAN.md) for the SaaS roadmap.

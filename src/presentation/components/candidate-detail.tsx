@@ -70,7 +70,7 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
           >
             Download PDF report
           </a>
-          {(candidate.status === "failed" || !evaluation) && (
+          {!session?.isDemo && (candidate.status === "failed" || !evaluation) && (
             <RetryButton candidateId={candidate.id} />
           )}
         </div>
@@ -85,6 +85,17 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
       {evaluation ? (
         <>
           <RecruiterDecisionCard decision={ensureRecruiterDecision(evaluation)} />
+          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+            Evidence-review aid only. Scores and confidence are not validated predictions
+            of job performance. A person must review the underlying resume and job criteria.
+            {evaluation.provenance
+              ? ` Evaluation engine: ${evaluation.provenance.engine}
+                (${evaluation.provenance.model}, ${evaluation.provenance.rubricVersion}).`
+              : " Evaluation engine: legacy/unrecorded."}
+            {evaluation.provenance?.fallbackReason
+              ? ` Fallback: ${evaluation.provenance.fallbackReason}.`
+              : ""}
+          </p>
 
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-4 rounded-2xl border border-border bg-white p-5">
@@ -116,7 +127,7 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
               <p className="text-sm leading-6 text-slate-700">
                 {evaluation.executiveSummary}
               </p>
-              <div>
+              <div className="hidden">
                 <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Employment gaps
                 </h3>
@@ -124,7 +135,7 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
                   {evaluation.employmentGapDetection.notes}
                 </p>
               </div>
-              <div>
+              <div className="hidden">
                 <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Job hopper signal
                 </h3>
