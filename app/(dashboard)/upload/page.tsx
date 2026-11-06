@@ -10,8 +10,7 @@ export default async function UploadPage() {
         <h1 className="text-2xl font-semibold text-slate-900">Synthetic demo only</h1>
         <p className="max-w-xl text-sm leading-6 text-slate-700">
           Personal resume uploads are disabled in the public portfolio sandbox.
-          Explore nine generated sample candidates instead. This protects visitors'
-          information and avoids accidental real hiring decisions.
+          Explore nine generated sample candidates instead. This protects visitor information and avoids accidental real hiring decisions.
         </p>
         <Link href="/dashboard" className="inline-block rounded-xl bg-brand px-4 py-2 text-white">
           Explore the sample screening
