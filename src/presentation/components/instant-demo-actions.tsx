@@ -94,11 +94,10 @@ export function InstantDemoActions() {
             Instant demo
           </p>
           <h2 className="text-lg font-semibold text-slate-900">
-            Experience the full product in under a minute
+            Explore the private, synthetic resume demo
           </h2>
           <p className="max-w-xl text-sm leading-6 text-muted">
-            Loads a Java Backend Engineer JD plus 9 sample resumes, then runs the same
-            screening pipeline used in production.
+            Loads a Java Backend Engineer JD plus 9 sample resumes, then runs the same parsing pipeline using deterministic heuristic scoring.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
