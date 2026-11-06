@@ -1,175 +1,133 @@
-# AI Resume Screener
+# AI Resume Screener — Portfolio Demo
 
-AI Recruiter Copilot that helps recruiters decide **who to interview**.
+**Next.js 15 · React 19 · TypeScript · Clean Architecture · Gemini-compatible AI**
 
-## Features
+An engineering portfolio project for **AI-assisted resume evidence review and interview preparation**. It parses sample résumés, compares evidence to a job description, organizes candidates and generates interview-preparation reports. **It does not make hiring decisions.**
 
-- Login (demo auth + optional Supabase)
-- Protected dashboard
-- Job description intake + multi PDF/DOCX upload
-- Resume parsing (PDF/DOCX)
-- AI extraction (name, contact, experience, skills, projects, education, certifications)
-- AI evaluation with structured scores, gaps, interview questions, hiring recommendation
-- Candidate ranking + detail pages
-- Downloadable PDF reports
-- Loading states, error handling, AI retry
-- Gemini (OpenAI-compatible) by default, with heuristic fallback
+> This repository is a portfolio demonstration, not a production hiring system. The public sandbox uses **synthetic candidates only**, and ranking scores are uncalibrated indicators.
 
-## Quick start
+## What works
 
-```bash
-npm install
-cp .env.example .env.local
-npm run dev
-```
+- Responsive dashboard with screening sessions and ranked candidates.
+- PDF/DOCX parsing with `unpdf` and `mammoth`.
+- Gemini model integration via the OpenAI-compatible API (private mode only).
+- Deterministic heuristic engine with tracked AI/fallback provenance.
+- Evidence-oriented interview suggestions, candidate pages and PDF reports.
+- **Instant Demo:** nine bundled synthetic résumés and one sample Java backend job description.
+- Per-visitor signed demo sessions, isolation and read-only restrictions for personal uploads.
+- Retrying failed candidates in private mode, bounded processing and local JSON persistence.
+- CI: TypeScript, ESLint, Next.js build, signed-session security and synthetic workflow smoke tests.
 
-Open [http://localhost:3000](http://localhost:3000).
+## Start the public demo locally
 
-### Demo login
-
-- Email: `demo@resumescreener.local`
-- Password: `demo1234`
-
-### Instant Demo (under 60 seconds)
-
-1. Sign in
-2. On the dashboard, click **Try Demo**
-3. The app creates a `Demo Screening` session (Java Backend Engineer JD + 9 sample resumes)
-4. It runs the **same** production screening pipeline and redirects to ranked candidates
-5. Use **Reset Demo** to delete only demo sessions/files (never real user screenings)
-
-Regenerate bundled demo PDFs if needed:
+Node.js 22+ recommended.
 
 ```bash
-npm run fixtures:demo
-```
-
-### Workflow
-
-1. Go to **Upload / JD**
-2. Paste a job description
-3. Upload one or more PDF/DOCX resumes
-4. Run AI screening
-5. Review ranked candidates
-6. Open a candidate detail page
-7. Download PDF report
-
-### Verify end-to-end
-
-```bash
-npm run fixtures:resumes
-npm run dev
-# in another terminal
-npm run verify:workflow
-```
-
-## Gemini / LLM configuration
-
-The app uses the OpenAI SDK against Google’s OpenAI-compatible Gemini endpoint.
-
-### 1. Create local secrets file
-
-```bash
+git clone https://github.com/5hu13ham/Resume-Screener.git
+cd Resume-Screener
+git switch feature/portfolio-safe-demo-ai-reliability-2026-11-06
+npm ci
 cp .env.example .env.local
 ```
 
-Edit `.env.local` only on your machine. Do **not** commit it.
-
-### 2. Required variables for live Gemini
-
-| Variable | Required for live LLM | Purpose |
-|----------|----------------------|---------|
-| `OPENAI_API_KEY` | Yes | Gemini API key |
-| `OPENAI_API_BASE` | No (has default) | OpenAI-compatible base URL |
-| `OPENAI_MODEL` | No (has default) | Model id |
-
-Defaults (when unset):
-
-```env
-OPENAI_API_BASE=https://generativelanguage.googleapis.com/v1beta/openai
-OPENAI_MODEL=gemini-flash-latest
-```
-
-Example `.env.local` (replace with your own key; never commit):
-
-```env
-OPENAI_API_KEY=your-gemini-api-key
-OPENAI_API_BASE=https://generativelanguage.googleapis.com/v1beta/openai
-OPENAI_MODEL=gemini-flash-latest
-```
-
-Without `OPENAI_API_KEY`, the app keeps working via the deterministic heuristic recruiter.
-
-### 3. Obtain a Gemini API key
-
-1. Open [Google AI Studio](https://aistudio.google.com/apikey)
-2. Create an API key
-3. Paste it into `.env.local` as `OPENAI_API_KEY`
-4. Restart `npm run dev`
-
-### 4. Confirm secrets are gitignored
-
-`.gitignore` includes:
-
-```gitignore
-.env
-.env.local
-.env.*.local
-.env*.local
-```
-
-Verify locally:
+Generate a **new secret** for `DEMO_SESSION_SECRET` in `.env.local`:
 
 ```bash
-git check-ignore -v .env.local
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 5. Switch models
+Do not paste the secret into Git or share it publicly.
 
-Change `OPENAI_MODEL` in `.env.local`, for example:
-
-```env
-OPENAI_MODEL=gemini-flash-latest
-# or another Gemini model id supported by the OpenAI-compatible endpoint
+```bash
+npm run dev
 ```
 
-Restart the dev server after changes.
+Open **http://localhost:3000/login**, select **Explore synthetic-data demo**, then press **Try Demo** on the dashboard. No shared username/password or Gemini key is necessary. The demo uses an expiring, signed HttpOnly cookie for each browser.
 
-### 6. Verify Gemini is active
+For automated verification, with the server running:
 
-1. Restart the app and check server logs for:
-
-```text
----------------------------------------
-LLM Status
-
-Provider: Gemini (OpenAI Compatible)
-Model: gemini-flash-latest
-Base URL: https://generativelanguage.googleapis.com/v1beta/openai
-
-Status:
-Live LLM
----------------------------------------
+```bash
+npm run verify:demo
+node scripts/verify-demo-security.mjs
 ```
 
-2. Open **Settings** in the app:
-   - Live: `🟢 Live Gemini`
-   - Fallback: `🟡 Heuristic Fallback` with reason `OPENAI_API_KEY not configured`
+Production build checks:
 
-The Settings page never displays API keys.
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
 
-## Scripts
+## Public demo safety boundary
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Local development |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript |
-| `npm run verify:workflow` | API/UI workflow smoke test |
+- Demo visitors are isolated by unique HMAC-signed sessions, not a static `rs_demo_session=1` cookie.
+- **Personal resume uploads are disabled** for demo users.
+- Demo users cannot create arbitrary sessions, rename, delete or re-screen uploaded candidates. They can run/reset **their own** synthetic screening.
+- Same-origin restrictions protect demo mutation routes, alongside Strict SameSite cookies.
+- Demo results use deterministic heuristics; the product labels the evaluation engine and rubric version.
+- Synthetic sample files and local stores are **not** a cloud service or production persistence strategy.
 
 ## Architecture
 
-Clean Architecture under `src/` — see [ARCHITECTURE.md](./ARCHITECTURE.md).
+```text
+React / Next.js App Router
+       │  authenticated routes and server actions
+       ▼
+Application use cases (screen / upload / report / session lifecycle)
+       │
+       ▼
+Domain entities and interfaces (ports)
+       ▲
+       │ implementations
+       ├─ LocalFileStorage / JSON repository
+       ├─ PDF / DOCX parsers
+       ├─ Heuristic recruiter (public sandbox)
+       ├─ Gemini OpenAI-compatible recruiter (private, opt-in)
+       └─ PDFKit report generator
+```
 
-Local screening data is stored under `data/` (gitignored).
+More detail: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Key API routes
+
+| Path | Purpose |
+|---|---|
+| `POST /api/demo/session` | Create an isolated signed demo identity |
+| `POST /api/demo/run` | Run the synthetic nine-resume demo |
+| `POST /api/demo/reset` | Remove only that visitor's demo records |
+| `GET /api/sessions` | List the current visitor's sessions |
+| `GET /api/sessions/:id` | Retrieve an owned screening session |
+| `GET /api/candidates/:id` | Retrieve an owned candidate |
+| `GET /api/sessions/:id/report` | Download screening PDF |
+| `GET /api/candidates/:id/report` | Download candidate PDF |
+
+Private-mode write endpoints also exist but require a **real authenticated account**. See the architecture notes for restrictions.
+
+## Gemini configuration (optional)
+
+For private authentication and experimental real-data workflows, configure a Supabase account and the optional server-side variables:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+OPENAI_API_KEY=
+OPENAI_API_BASE=https://generativelanguage.googleapis.com/v1beta/openai
+OPENAI_MODEL=gemini-flash-latest
+```
+
+The public demo never needs `OPENAI_API_KEY` and doesn't send uploaded personal résumés to an LLM. Private mode still uses **local files/JSON** and is not appropriate for multi-instance hosting or real recruiting data without further privacy, storage and operational work.
+
+## AI result interpretation
+
+Candidate records may include engine/model provenance, a fallback reason and rubric version. Gemini responses are schema-validated, and the heuristic path uses transparent keyword and résumé/JD overlap signals. Scores are not scientifically calibrated or fair-hiring certified; a low score never justifies automatic rejection.
+
+**Future SaaS:** replace local storage adapters with tenant-aware database/object storage, introduce durable background screening workers, audit/retention controls, rate limiting and evaluation calibration.
+
+## Documentation
+
+- [Architecture, trust boundary and trade-offs](ARCHITECTURE.md)
+- [Portfolio-first release decisions](docs/PORTFOLIO_RELEASE_PLAN.md)
+- [Step-by-step interview changelog](docs/PORTFOLIO_INTERVIEW_NOTES.md)
+
+**Created by Shubham Kumar — software engineering portfolio.**
