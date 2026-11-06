@@ -13,12 +13,12 @@ const links = [
   { href: "/settings", label: "Settings" },
 ];
 
-export function SidebarNav() {
+export function SidebarNav({ isDemo = false }: { isDemo?: boolean }) {
   const pathname = usePathname();
 
   return (
     <nav className="space-y-1">
-      {links.map((link) => {
+      {links.filter((link) => !isDemo || link.href !== "/upload").map((link) => {
         const active =
           pathname === link.href || pathname.startsWith(`${link.href}/`);
 
