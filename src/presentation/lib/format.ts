@@ -3,15 +3,15 @@ import type { HiringRecommendation } from "@/src/domain/entities/screening";
 export function formatRecommendation(value: HiringRecommendation | undefined) {
   switch (value) {
     case "strong_yes":
-      return "Strong Yes";
+      return "High alignment";
     case "yes":
-      return "Yes — Interview";
+      return "Good alignment";
     case "maybe":
-      return "Maybe";
+      return "Review evidence";
     case "no":
-      return "No";
+      return "Needs human review";
     case "strong_no":
-      return "Strong No";
+      return "Needs human review";
     default:
       return "Pending";
   }
