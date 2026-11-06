@@ -70,7 +70,7 @@ export function CandidateDetailView({ candidate, session }: CandidateDetailProps
           >
             Download PDF report
           </a>
-          {(candidate.status === "failed" || !evaluation) && (
+          {!session?.isDemo && (candidate.status === "failed" || !evaluation) && (
             <RetryButton candidateId={candidate.id} />
           )}
         </div>
